@@ -1,0 +1,32 @@
+name: Log Arcane Angler Weather
+
+on:
+  schedule:
+    # Runs every 10 minutes. GitHub Actions cron is UTC and can lag a few
+    # minutes under load, so 10 min is a safe margin for catching a 2-hour
+    # rotation without missing it.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {} # lets you also trigger it manually from the Actions tab
+
+jobs:
+  log-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run weather logger
+        run: node log-weather.js
+
+      - name: Commit updated log
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git add weather-log.json
+          git diff --quiet --cached || git commit -m "Update weather log"
+          git push
